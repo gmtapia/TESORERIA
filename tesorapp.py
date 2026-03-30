@@ -317,33 +317,53 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     # Métrica rápida debajo del Pie
     st.info(f"**Resumen {mes_sel}:** {alumnos_pagados} alumnos al día de un total de 25.")
 
-# --- PANTALLA: DETALLE ALUMNO ---
+# --- PANTALLA: DETALLE ALUMNO (CON VALIDACIÓN DE USUARIO) ---
 elif st.session_state['current_screen'] == 'detalle_alumno':
     if st.button("⬅️ Volver", key="btn_back_alu"): 
         navigate_to('menu_principal')
+    
     st.markdown('<div class="main-header">DETALLE POR ALUMNO</div>', unsafe_allow_html=True)
     
     if df_usuarios is not None:
+        # 1. Selector de Alumno (Visible para todos)
         lista_nombres = sorted(df_usuarios['NombreAlumno'].unique())
-        nombre_sel = st.selectbox("Seleccione el nombre del alumno:", lista_nombres)
+        nombre_sel = st.selectbox("Seleccione el alumno para consultar:", ["Seleccione..."] + lista_nombres)
         
-        # Obtener ID
-        id_alu = df_usuarios[df_usuarios['NombreAlumno'] == nombre_sel]['AlumnoID'].iloc[0]
-        
-        # Filtrar Pagos
-        pagos_alu = df_pagos[df_pagos['AlumnoID'] == id_alu].copy()
-        pagos_alu['MontoNum'] = pagos_alu['Monto'].apply(clean_monto)
-        total_alu = pagos_alu['MontoNum'].sum()
-        
-        st.markdown(f"""
-            <div class="metric-container" style="background-color: #F1F8E9; border-color: #7B9D4A;">
-                <div class="metric-label">Total acumulado por {nombre_sel}</div>
-                <div class="metric-value" style="color: #33691E;">{format_chile(total_alu)}</div>
-            </div>
-            <br>
-        """, unsafe_allow_html=True)
-        
-        if not pagos_alu.empty:
-            st.dataframe(pagos_alu[['Mes', 'Concepto', 'Monto']], use_container_width=True, hide_index=True)
-        else:
-            st.info("No se registran pagos para este alumno todavía.")
+        if nombre_sel != "Seleccione...":
+            # 2. Solicitar "Contraseña" (Nombre de Usuario)
+            st.info(f"Para ver los datos de {nombre_sel}, por favor ingrese su identificador.")
+            user_input = st.text_input("Nombre de Usuario / Contraseña:", type="password", key="pass_input")
+            
+            # Buscamos el usuario correcto en el DataFrame de Usuarios
+            datos_user = df_usuarios[df_usuarios['NombreAlumno'] == nombre_sel].iloc[0]
+            user_real = str(datos_user['Usuario']).strip() # Columna 'Usuario' en tu Excel
+            id_alu = datos_user['AlumnoID']
+            
+            # 3. Validación
+            if user_input:
+                if user_input.strip() == user_real:
+                    st.success("Acceso concedido")
+                    
+                    # Filtrar y Limpiar Pagos
+                    pagos_alu = df_pagos[df_pagos['AlumnoID'] == id_alu].copy()
+                    pagos_alu['MontoNum'] = pagos_alu['Monto'].apply(clean_monto)
+                    total_alu = pagos_alu['MontoNum'].sum()
+                    
+                    # Visualización de datos
+                    st.markdown(f"""
+                        <div class="metric-container" style="background-color: #F1F8E9; border-color: #7B9D4A;">
+                            <div class="metric-label">Total acumulado: {nombre_sel}</div>
+                            <div class="metric-value" style="color: #33691E;">{format_chile(total_alu)}</div>
+                        </div>
+                        <br>
+                    """, unsafe_allow_html=True)
+                    
+                    if not pagos_alu.empty:
+                        # Agrupamos por mes y concepto para que se vea ordenado
+                        df_v = pagos_alu.groupby(['Mes', 'Concepto'])['MontoNum'].sum().reset_index()
+                        df_v['Monto'] = df_v['MontoNum'].apply(format_chile)
+                        st.dataframe(df_v[['Mes', 'Concepto', 'Monto']], use_container_width=True, hide_index=True)
+                    else:
+                        st.info("No se registran pagos para este alumno.")
+                else:
+                    st.error("Nombre de usuario incorrecto. No tiene permisos para ver estos datos.")
