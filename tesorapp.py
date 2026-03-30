@@ -13,54 +13,43 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estilos CSS - VISIBILIDAD MEJORADA PARA MÓVILES
+# Estilos CSS - RECUPERADAS LAS TARJETAS DEL MENÚ Y VISIBILIDAD MÓVIL
 st.markdown("""
 <style>
-    /* FONDO DE LA APP */
+    /* 1. FONDO GLOBAL AZULADO CLARO */
     .stApp {
         background-color: #F0F4F8;
     }
 
-    /* FORZAR COLOR DE TEXTO EN TODO EL DOCUMENTO */
+    /* 2. FORZAR COLOR DE TEXTO OSCURO EN TODO EL DOCUMENTO (Visibilidad Móvil) */
     html, body, [data-testid="stWidgetLabel"], .stText, p, h1, h2, h3 {
         color: #1A1A1A !important;
     }
 
-    /* TÍTULOS ESPECÍFICOS */
-    .big-title { 
-        font-size: 28px !important; 
-        font-weight: bold; 
-        color: #1A1A1A !important; 
-        text-align: center; 
-        margin-bottom: 5px; 
-    }
-    .sub-title { 
-        font-size: 16px !important; 
-        color: #444444 !important; 
-        text-align: center; 
-        margin-bottom: 20px; 
-    }
-    .main-header { 
-        font-size: 22px !important; 
-        font-weight: bold; 
-        color: #1A1A1A !important; 
-        text-align: center; 
-        margin-bottom: 15px;
-    }
+    /* 3. TÍTULOS ESPECÍFICOS */
+    .big-title { font-size: 28px !important; font-weight: bold; color: #1A1A1A !important; text-align: center; margin-bottom: 5px; }
+    .sub-title { font-size: 16px !important; color: #444444 !important; text-align: center; margin-bottom: 20px; font-weight: normal; }
+    .main-header { font-size: 22px !important; font-weight: bold; color: #1A1A1A !important; text-align: center; margin-bottom: 15px;}
 
-    /* BOTONES DE RADIO (Ingresos/Gastos) */
-    div[data-testid="stMarkdownContainer"] > p {
-        color: #1A1A1A !important;
-        font-weight: bold !important;
+    /* 4. --- RECUPERACIÓN DE TARJETAS DEL MENÚ PRINCIPAL --- */
+    .menu-card {
+        background-color: #FFFFFF !important; /* Fondo blanco sólido */
+        border-radius: 12px; 
+        padding: 20px;
+        border: 1px solid #D1D5DB; /* Borde gris suave pero visible */
+        text-align: center; 
+        margin-bottom: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.08); /* Sombra suave para efecto flotante */
     }
-    
-    /* FIX PARA LABELS DE BOTONES DE RADIO EN CELULAR */
-    label[data-testid="stWidgetLabel"] p {
-        color: #1A1A1A !important;
-        font-size: 16px !important;
+    .card-title { 
+        font-size: 18px !important; 
+        font-weight: bold !important; 
+        color: #1A1A1A !important; /* Texto negro */
+        margin-top: 10px; 
     }
+    .card-icon { font-size: 45px; }
 
-    /* TARJETAS DE MÉTRICAS */
+    /* 5. TARJETAS DE MÉTRICAS (Resumen Anual) */
     .metric-container {
         background-color: #FFFFFF; 
         border-radius: 10px; 
@@ -69,18 +58,10 @@ st.markdown("""
         text-align: center;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    .metric-label { 
-        font-size: 12px; 
-        color: #555555 !important; 
-        font-weight: bold; 
-    }
-    .metric-value { 
-        font-size: 22px; 
-        font-weight: bold; 
-        color: #1A1A1A !important; 
-    }
+    .metric-label { font-size: 12px; color: #555555 !important; font-weight: bold; }
+    .metric-value { font-size: 22px; font-weight: bold; color: #1A1A1A !important; }
 
-    /* BOTONES */
+    /* 6. BOTONES (Generales y Menú) */
     .stButton > button {
         background-color: #7B9D4A !important; 
         color: white !important;
@@ -89,15 +70,17 @@ st.markdown("""
         font-weight: bold !important;
         border: none !important;
         height: 45px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Botón de Salir (Menú Principal) */
+    .stButton > button[key="btn_exit"] {
+        background-color: #FFFFFF !important;
+        color: #555555 !important;
+        border: 1px solid #D1D5DB !important;
     }
 
-    /* TABLAS */
-    [data-testid="stTable"] {
-        color: #1A1A1A !important;
-        background-color: white;
-    }
-
-    /* OCULTAR ELEMENTOS STREAMLIT */
+    /* 7. OCULTAR ELEMENTOS STREAMLIT */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
