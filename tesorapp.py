@@ -266,6 +266,57 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     else:
         st.info("No hay movimientos registrados.")
 
+# Grafico Pie para Cumplimiento Cuotas Mensuales
+st.markdown("---")
+    st.write("### 📈 Cumplimiento de Cuotas Mensuales")
+    
+    # 1. Selector de Mes para el cumplimiento
+    mes_sel = st.selectbox("Seleccione el mes para verificar cumplimiento:", meses_cl, index=0)
+    
+    # 2. Cálculo de cumplimiento: Buscamos pagos de $10.000 con concepto "CUOTAS 2026"
+    # Filtramos por el mes seleccionado y el concepto específico
+    pagos_mes = p_temp[
+        (p_temp['MesFull'] == mes_sel) & 
+        (p_temp['Concepto'].str.contains("CUOTAS 2026", case=False, na=False)) &
+        (p_temp['MontoNum'] >= 10000)
+    ]
+    
+    alumnos_pagados = len(pagos_mes['AlumnoID'].unique())
+    alumnos_pendientes = max(0, 25 - alumnos_pagados)
+    
+    # 3. Crear DataFrame para el gráfico Pie
+    df_pie = pd.DataFrame({
+        "Estado": ["Pagado", "Pendiente"],
+        "Cantidad": [alumnos_pagados, alumnos_pendientes]
+    })
+    
+    # 4. Generar Gráfico Pie
+    fig_pie = px.pie(
+        df_pie, 
+        values='Cantidad', 
+        names='Estado',
+        color='Estado',
+        color_discrete_map={'Pagado': '#7B9D4A', 'Pendiente': '#D32F2F'}, # Verde Oliva y Rojo
+        hole=0.4, # Efecto Donut para que se vea más moderno
+        title=f"Cumplimiento Cuotas - {mes_sel}"
+    )
+    
+    fig_pie.update_traces(textinfo='percent+label', pull=[0.1, 0])
+    
+    fig_pie.update_layout(
+        showlegend=True,
+        dragmode=False,
+        # Bloqueamos interacciones para celular
+        xaxis=dict(fixedrange=True),
+        yaxis=dict(fixedrange=True)
+    )
+    
+    # Renderizar con el mismo bloqueo de zoom que el anterior
+    st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+    
+    # Métrica rápida debajo del Pie
+    st.info(f"**Resumen {mes_sel}:** {alumnos_pagados} alumnos al día de un total de 25.")
+
 # --- PANTALLA: DETALLE ALUMNO ---
 elif st.session_state['current_screen'] == 'detalle_alumno':
     if st.button("⬅️ Volver", key="btn_back_alu"): 
