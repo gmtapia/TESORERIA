@@ -221,8 +221,19 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     # --- CÁLCULOS DE MÉTRICAS ---
     # Convertimos montos a numérico por seguridad (asumiendo formato chileno, ej: 90.000)
     def clean_monto(monto):
-        if pd.isna(monto): return 0
-        return float(str(monto).replace('.', '').replace('$', '').strip())
+    if pd.isna(monto) or monto == "": 
+        return 0
+    # Si el valor ya es un número (float o int), lo usamos directamente
+    if isinstance(monto, (int, float)):
+        return float(monto)
+    
+    # Si es texto, limpiamos símbolos y puntos de miles
+    monto_str = str(monto).replace('$', '').replace('.', '').replace(',', '').strip()
+    
+    try:
+        return float(monto_str)
+    except:
+        return 0
 
     total_ingresos = df_pagos['Monto'].apply(clean_monto).sum()
     total_gastos = df_gastos['Monto'].apply(clean_monto).sum()
@@ -235,7 +246,7 @@ elif st.session_state['current_screen'] == 'resumen_anual':
         st.markdown(f"""
         <div class="metric-container">
             <div class="metric-label">Ingresos Totales</div>
-            <div class="metric-value">$ {total_ingresos:,.0f}</div>
+            <div class="metric-value">$ {total_ingresos:,.0f}.replace(',', '.')</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -243,7 +254,7 @@ elif st.session_state['current_screen'] == 'resumen_anual':
         st.markdown(f"""
         <div class="metric-container">
             <div class="metric-label">Gasto Total</div>
-            <div class="metric-value">$ {total_gastos:,.0f}</div>
+            <div class="metric-value">$ {total_gastos:,.0f}.replace(',', '.')</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -253,7 +264,7 @@ elif st.session_state['current_screen'] == 'resumen_anual':
         st.markdown(f"""
         <div class="metric-container">
             <div class="metric-label">Saldo</div>
-            <div class="metric-value" style="color: {saldo_color};">$ {saldo_neto:,.0f}</div>
+            <div class="metric-value" style="color: {saldo_color};">$ {saldo_neto:,.0f}.replace(',', '.')</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -327,9 +338,11 @@ elif st.session_state['current_screen'] == 'resumen_anual':
         plot_bgcolor='rgba(0,0,0,0)',
         xaxis_title=None,
         yaxis=dict(
-            tickformat=',.0f', # Formato de moneda
-            gridcolor='#E0E0E0'
-        ),
+        # Esto le dice a Plotly que use el punto como separador de miles
+        tickformat=',.0f', 
+        separators=',.', 
+        gridcolor='#E0E0E0'
+    ),
         title_font=dict(size=18),
         margin=dict(l=20, r=20, t=50, b=20)
     )
