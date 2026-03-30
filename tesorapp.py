@@ -266,8 +266,8 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     else:
         st.info("No hay movimientos registrados.")
 
-# Grafico Pie para Cumplimiento Cuotas Mensuales
-st.markdown("---")
+    # Grafico Pie para Cumplimiento Cuotas Mensuales
+    st.markdown("---")
     st.write("### 📈 Cumplimiento de Cuotas Mensuales")
     
     # 1. Selector de Mes para el cumplimiento
