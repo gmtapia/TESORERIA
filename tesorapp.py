@@ -137,6 +137,14 @@ df_usuarios, df_pagos, df_gastos = load_data()
 # 4. LÓGICA DE PANTALLAS
 # ==========================================
 
+# --- BOTON GENERAL PARA ACTUALIZAR DATOS ---
+col_refresh, _ = st.columns([1, 2])
+with col_refresh:
+    if st.button("🔄 Actualizar Datos", key="refresh_global"):
+        with st.spinner('Sincronizando con Tesorería...'):
+            st.cache_data.clear()
+            st.rerun()
+            
 # --- PANTALLA: INICIO (PERSONALIZADA CON LOUGO Y FONDO) ---
 if st.session_state['current_screen'] == 'inicio':
     # Banner superior más estético
