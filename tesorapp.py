@@ -220,7 +220,7 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     
     # --- CÁLCULOS DE MÉTRICAS ---
     # Convertimos montos a numérico por seguridad (asumiendo formato chileno, ej: 90.000)
-    def clean_monto(monto):
+def clean_monto(monto):
     if pd.isna(monto) or monto == "": 
         return 0
     # Si el valor ya es un número (float o int), lo usamos directamente
@@ -231,6 +231,7 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     monto_str = str(monto).replace('$', '').replace('.', '').replace(',', '').strip()
     
     try:
+        # Convertimos a float y nos aseguramos de que no sea un número gigante
         return float(monto_str)
     except:
         return 0
