@@ -13,60 +13,91 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estilos CSS - AHORA CON FONDO AZULADO CLARO
+# Estilos CSS - VISIBILIDAD MEJORADA PARA MÓVILES
 st.markdown("""
 <style>
-    /* FONDO DE LA APP (Azulado Claro) */
+    /* FONDO DE LA APP */
     .stApp {
-        background-color: #F0F4F8; /* Un azul-grisáceo muy suave y profesional */
+        background-color: #F0F4F8;
     }
 
-    /* ESTILOS DE TEXTO */
-    .big-title { font-size: 32px !important; font-weight: bold; color: #1A1A1A; margin-bottom: 5px; text-align: center; }
-    .sub-title { font-size: 18px !important; color: #555555; margin-bottom: 30px; text-align: center; font-weight: normal;}
-    .main-header { font-size: 24px !important; font-weight: bold; color: #1A1A1A; margin-bottom: 20px; text-align: center;}
-    
-    /* TARJETAS DEL MENÚ */
-    .menu-card {
-        background-color: #FFFFFF; border-radius: 12px; padding: 25px;
-        border: 1px solid #E0E0E0; text-align: center; margin-bottom: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Sombra suave */
+    /* FORZAR COLOR DE TEXTO EN TODO EL DOCUMENTO */
+    html, body, [data-testid="stWidgetLabel"], .stText, p, h1, h2, h3 {
+        color: #1A1A1A !important;
     }
-    .card-title { font-size: 18px; font-weight: bold; color: #1A1A1A; margin-top: 10px; }
-    .card-icon { font-size: 45px; }
+
+    /* TÍTULOS ESPECÍFICOS */
+    .big-title { 
+        font-size: 28px !important; 
+        font-weight: bold; 
+        color: #1A1A1A !important; 
+        text-align: center; 
+        margin-bottom: 5px; 
+    }
+    .sub-title { 
+        font-size: 16px !important; 
+        color: #444444 !important; 
+        text-align: center; 
+        margin-bottom: 20px; 
+    }
+    .main-header { 
+        font-size: 22px !important; 
+        font-weight: bold; 
+        color: #1A1A1A !important; 
+        text-align: center; 
+        margin-bottom: 15px;
+    }
+
+    /* BOTONES DE RADIO (Ingresos/Gastos) */
+    div[data-testid="stMarkdownContainer"] > p {
+        color: #1A1A1A !important;
+        font-weight: bold !important;
+    }
     
-    /* TARJETAS DE MÉTRICAS (Resumen Anual) */
+    /* FIX PARA LABELS DE BOTONES DE RADIO EN CELULAR */
+    label[data-testid="stWidgetLabel"] p {
+        color: #1A1A1A !important;
+        font-size: 16px !important;
+    }
+
+    /* TARJETAS DE MÉTRICAS */
     .metric-container {
-        background-color: #FFFFFF; border-radius: 10px; padding: 15px;
-        border: 1px solid #E0E0E0; text-align: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        background-color: #FFFFFF; 
+        border-radius: 10px; 
+        padding: 12px;
+        border: 1px solid #D0D7DE; 
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    .metric-label { font-size: 13px; color: #757575; font-weight: bold; }
-    .metric-value { font-size: 24px; font-weight: bold; color: #1A1A1A; }
-    
-    /* BOTONES STREAMLIT */
+    .metric-label { 
+        font-size: 12px; 
+        color: #555555 !important; 
+        font-weight: bold; 
+    }
+    .metric-value { 
+        font-size: 22px; 
+        font-weight: bold; 
+        color: #1A1A1A !important; 
+    }
+
+    /* BOTONES */
     .stButton > button {
-        background-color: #7B9D4A !important; color: white !important;
-        border-radius: 8px !important; width: 100%; font-weight: bold !important;
-        border: none !important; transition: background-color 0.3s;
-    }
-    .stButton > button:hover {
-        background-color: #6A8A3F !important; /* Un tono más oscuro al pasar el mouse */
-    }
-
-    /* Botón Secundario (Volver/Salir) */
-    div[data-testid="stFormSubmitButton"] > button, 
-    .stButton > button[key="btn_back"],
-    .stButton > button[key="btn_exit"] {
-        background-color: #FFFFFF !important; color: #555555 !important;
-        border: 1px solid #CCCCCC !important;
-    }
-    .stButton > button[key="btn_back"]:hover,
-    .stButton > button[key="btn_exit"]:hover {
-        background-color: #F0F2F5 !important;
+        background-color: #7B9D4A !important; 
+        color: white !important;
+        border-radius: 8px !important; 
+        width: 100%; 
+        font-weight: bold !important;
+        border: none !important;
+        height: 45px;
     }
 
-    /* Ocultar elementos de Streamlit */
+    /* TABLAS */
+    [data-testid="stTable"] {
+        color: #1A1A1A !important;
+        background-color: white;
+    }
+
+    /* OCULTAR ELEMENTOS STREAMLIT */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
