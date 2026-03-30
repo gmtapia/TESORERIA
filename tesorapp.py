@@ -141,7 +141,7 @@ if 'current_screen' not in st.session_state:
 # Función para cambiar de pantalla
 def navigate_to(screen_name):
     st.session_state['current_screen'] = screen_name
-    st.experimental_rerun() # Forzamos recarga para ver el cambio
+    st.rerun() # Forzamos recarga para ver el cambio
 
 # --- PANTALLA 1: INICIO ---
 if st.session_state['current_screen'] == 'inicio':
