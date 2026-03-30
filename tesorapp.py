@@ -234,13 +234,24 @@ elif st.session_state['current_screen'] == 'resumen_anual':
         color_barras = '#8B0000'
         df_agrupado = g_temp.groupby(['MesFull', 'Concepto'])['MontoNum'].sum().reset_index()
 
-    # 4. Mostrar Gráfico
+    # 4. Mostrar Gráfico (ESTÁTICO Y SIN ZOOM)
     resumen_grafico['MesFull'] = pd.Categorical(resumen_grafico['MesFull'], categories=meses_cl, ordered=True)
     fig = px.bar(resumen_grafico, x='MesFull', y='MontoNum', text_auto='.2s')
     fig.update_traces(marker_color=color_barras, textposition='outside')
-    fig.update_layout(xaxis_title=None, yaxis_title="Monto ($)", plot_bgcolor='rgba(0,0,0,0)', separators=',.')
-    fig.update_yaxes(tickformat=',.0f')
-    st.plotly_chart(fig, use_container_width=True)
+    
+    fig.update_layout(
+        xaxis_title=None, 
+        yaxis_title="Monto ($)", 
+        plot_bgcolor='rgba(0,0,0,0)', 
+        separators=',.',
+        # --- AJUSTES DE FIJACIÓN ---
+        dragmode=False, # Desactiva el arrastre
+        xaxis=dict(fixedrange=True), # Bloquea zoom en eje X
+        yaxis=dict(fixedrange=True, tickformat=',.0f') # Bloquea zoom en eje Y
+    )
+    
+    # Renderizar el gráfico ocultando la barra de herramientas superior
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     # 5. Tabla Resumen Agrupada
     st.write("### 📝 Resumen de Movimientos por Concepto")
