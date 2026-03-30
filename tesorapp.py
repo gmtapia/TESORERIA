@@ -7,35 +7,66 @@ from streamlit_gsheets import GSheetsConnection
 # 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS
 # ==========================================
 st.set_page_config(
-    page_title="Tesorería Kinder C 2026",
+    page_title="Tesorería Kinder C 2026 - SSCC",
     page_icon="💰",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Estilos CSS Limpios
+# Estilos CSS - AHORA CON FONDO AZULADO CLARO
 st.markdown("""
 <style>
-    .big-title { font-size: 30px !important; font-weight: bold; color: #1A1A1A; margin-bottom: 20px; text-align: left; }
-    .main-header { font-size: 24px !important; font-weight: bold; color: #1A1A1A; margin-bottom: 20px; }
+    /* FONDO DE LA APP (Azulado Claro) */
+    .stApp {
+        background-color: #F0F4F8; /* Un azul-grisáceo muy suave y profesional */
+    }
+
+    /* ESTILOS DE TEXTO */
+    .big-title { font-size: 32px !important; font-weight: bold; color: #1A1A1A; margin-bottom: 5px; text-align: center; }
+    .sub-title { font-size: 18px !important; color: #555555; margin-bottom: 30px; text-align: center; font-weight: normal;}
+    .main-header { font-size: 24px !important; font-weight: bold; color: #1A1A1A; margin-bottom: 20px; text-align: center;}
+    
+    /* TARJETAS DEL MENÚ */
     .menu-card {
-        background-color: #F8F9FA; border-radius: 12px; padding: 25px;
+        background-color: #FFFFFF; border-radius: 12px; padding: 25px;
         border: 1px solid #E0E0E0; text-align: center; margin-bottom: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Sombra suave */
     }
     .card-title { font-size: 18px; font-weight: bold; color: #1A1A1A; margin-top: 10px; }
     .card-icon { font-size: 45px; }
+    
+    /* TARJETAS DE MÉTRICAS (Resumen Anual) */
     .metric-container {
         background-color: #FFFFFF; border-radius: 10px; padding: 15px;
         border: 1px solid #E0E0E0; text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     .metric-label { font-size: 13px; color: #757575; font-weight: bold; }
     .metric-value { font-size: 24px; font-weight: bold; color: #1A1A1A; }
+    
+    /* BOTONES STREAMLIT */
     .stButton > button {
         background-color: #7B9D4A !important; color: white !important;
         border-radius: 8px !important; width: 100%; font-weight: bold !important;
-        border: none !important;
+        border: none !important; transition: background-color 0.3s;
     }
-    /* Ocultar elementos innecesarios de Streamlit */
+    .stButton > button:hover {
+        background-color: #6A8A3F !important; /* Un tono más oscuro al pasar el mouse */
+    }
+
+    /* Botón Secundario (Volver/Salir) */
+    div[data-testid="stFormSubmitButton"] > button, 
+    .stButton > button[key="btn_back"],
+    .stButton > button[key="btn_exit"] {
+        background-color: #FFFFFF !important; color: #555555 !important;
+        border: 1px solid #CCCCCC !important;
+    }
+    .stButton > button[key="btn_back"]:hover,
+    .stButton > button[key="btn_exit"]:hover {
+        background-color: #F0F2F5 !important;
+    }
+
+    /* Ocultar elementos de Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -43,7 +74,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. FUNCIONES DE APOYO
+# 2. FUNCIONES DE APOYO (REVISADAS)
 # ==========================================
 def clean_monto(monto):
     """Limpia montos evitando el error del cero adicional"""
@@ -59,6 +90,7 @@ def clean_monto(monto):
 
 def format_chile(valor):
     """Formatea número a moneda chilena: $ 90.000"""
+    if valor is None: valor = 0
     return f"$ {valor:,.0f}".replace(",", ".")
 
 def navigate_to(screen_name):
@@ -67,7 +99,7 @@ def navigate_to(screen_name):
     st.rerun()
 
 # ==========================================
-# 3. CONEXIÓN Y CARGA
+# 3. CONEXIÓN Y CARGA (REVISADAS)
 # ==========================================
 if 'current_screen' not in st.session_state:
     st.session_state['current_screen'] = 'inicio'
@@ -91,17 +123,24 @@ df_usuarios, df_pagos, df_gastos = load_data()
 # 4. LÓGICA DE PANTALLAS
 # ==========================================
 
-# --- PANTALLA: INICIO ---
+# --- PANTALLA: INICIO (PERSONALIZADA CON LOUGO Y FONDO) ---
 if st.session_state['current_screen'] == 'inicio':
-    # Espacio superior estético
-    st.write("") 
-    st.markdown('<div style="background-color: #7B9D4A; height: 220px; border-radius: 15px; margin-bottom: 30px; display: flex; align-items: center; justify-content: center; color: white; font-size: 60px;">💰</div>', unsafe_allow_html=True)
-    st.markdown('<div class="big-title">CONTROL TESORERÍA<br>KINDER C - SSCC 2026</div>', unsafe_allow_html=True)
+    # Banner superior más estético
+    st.markdown('<div style="background-color: #7B9D4A; height: 250px; border-radius: 15px; margin-bottom: 30px; display: flex; align-items: center; justify-content: center; color: white; font-size: 80px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">💰</div>', unsafe_allow_html=True)
     
-    if st.button("👤 COMENZAR"):
-        navigate_to('menu_principal')
+    # Texto de bienvenida centrado
+    st.markdown('<div class="big-title">CONTROL TESORERÍA</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">Kinder C - SSCC Manquehue<br>Año Escolar 2026</div>', unsafe_allow_html=True)
+    
+    st.write("") # Espacio
+    
+    # Botón centrado
+    _, col_btn, _ = st.columns([1, 2, 1])
+    with col_btn:
+        if st.button("👥 INGRESAR AL SISTEMA", key="btn_start"):
+            navigate_to('menu_principal')
 
-# --- PANTALLA: MENÚ PRINCIPAL ---
+# --- PANTALLA: MENÚ PRINCIPAL (CON BOTÓN VOLVER A INICIO) ---
 elif st.session_state['current_screen'] == 'menu_principal':
     st.markdown('<div class="main-header">MENÚ PRINCIPAL</div>', unsafe_allow_html=True)
     
@@ -120,25 +159,22 @@ elif st.session_state['current_screen'] == 'menu_principal':
     st.write("") # Espacio en blanco
     st.write("")
     
-    # Creamos una columna central pequeña para el botón de salir
+    # Columna central para el botón de salir
     _, col_exit, _ = st.columns([1, 2, 1])
     with col_exit:
-        if st.button("🚪 SALIR AL INICIO", key="btn_exit"):
+        if st.button("🚪 VOLVER A BIENVENIDA", key="btn_exit"):
             navigate_to('inicio')
 
-# --- PANTALLA: RESUMEN ANUAL ---
+# --- PANTALLA: RESUMEN ANUAL (CON GRÁFICOS CORREGIDOS) ---
 elif st.session_state['current_screen'] == 'resumen_anual':
-    col_back, col_title = st.columns([1, 4])
-    with col_back:
-        if st.button("⬅️"): navigate_to('menu_principal')
+    if st.button("⬅️ Volver", key="btn_back_res"): 
+        navigate_to('menu_principal')
     
     st.markdown('<div class="main-header">RESUMEN ANUAL DE CAJA</div>', unsafe_allow_html=True)
     
-    # 1. Cálculos de Totales
-    # Usamos una copia para no alterar los datos originales
+    # Cálculos y Limpieza
     p_temp = df_pagos.copy()
     g_temp = df_gastos.copy()
-    
     p_temp['MontoNum'] = p_temp['Monto'].apply(clean_monto)
     g_temp['MontoNum'] = g_temp['Monto'].apply(clean_monto)
     
@@ -146,7 +182,7 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     gastos = g_temp['MontoNum'].sum()
     saldo = ingresos - gastos
     
-    # 2. Métricas Visuales
+    # Métricas
     c1, c2, c3 = st.columns(3)
     c1.markdown(f'<div class="metric-container"><div class="metric-label">Ingresos Totales</div><div class="metric-value">{format_chile(ingresos)}</div></div>', unsafe_allow_html=True)
     c2.markdown(f'<div class="metric-container"><div class="metric-label">Gasto Total</div><div class="metric-value">{format_chile(gastos)}</div></div>', unsafe_allow_html=True)
@@ -156,47 +192,37 @@ elif st.session_state['current_screen'] == 'resumen_anual':
 
     st.markdown("---")
     
-    # 3. Lógica del Gráfico (Aquí estaba el error del valor 0)
+    # Gráfico Dinámico
     opcion = st.radio("Seleccionar vista:", ["Ingresos por Mes", "Gastos por Mes"], horizontal=True)
     meses_orden = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
     
     if "Ingresos" in opcion:
-        # Agrupamos y reindexamos para asegurar que aparezcan todos los meses
         df_resumen = p_temp.groupby('Mes')['MontoNum'].sum().reset_index()
         titulo_g = "Evolución de Ingresos"
     else:
         df_resumen = g_temp.groupby('Mes')['MontoNum'].sum().reset_index()
         titulo_g = "Evolución de Gastos"
 
-    # Forzamos el orden de los meses para que no salgan desordenados
+    # Forzamos el orden de los meses
     df_resumen['Mes'] = pd.Categorical(df_resumen['Mes'], categories=meses_orden, ordered=True)
     df_resumen = df_resumen.sort_values('Mes')
 
-    # 4. Creación del Gráfico Plotly
-    fig = px.bar(
-        df_resumen, 
-        x='Mes', 
-        y='MontoNum', 
-        text_auto='.2s', 
-        title=titulo_g
-    )
-    
+    # Creación del Gráfico Plotly
+    fig = px.bar(df_resumen, x='Mes', y='MontoNum', text_auto='.2s', title=titulo_g)
     fig.update_traces(marker_color='#7B9D4A', textposition='outside')
-    
     fig.update_layout(
         xaxis_title=None,
         yaxis_title="Monto ($)",
         plot_bgcolor='rgba(0,0,0,0)',
-        separators=',.' # Esto arregla el error de formato que tenías antes
+        separators=',.' 
     )
-    
     fig.update_yaxes(tickformat=',.0f')
-    
     st.plotly_chart(fig, use_container_width=True)
 
 # --- PANTALLA: DETALLE ALUMNO ---
 elif st.session_state['current_screen'] == 'detalle_alumno':
-    if st.button("⬅️ Volver al Menú"): navigate_to('menu_principal')
+    if st.button("⬅️ Volver", key="btn_back_alu"): 
+        navigate_to('menu_principal')
     st.markdown('<div class="main-header">DETALLE POR ALUMNO</div>', unsafe_allow_html=True)
     
     if df_usuarios is not None:
@@ -209,7 +235,6 @@ elif st.session_state['current_screen'] == 'detalle_alumno':
         # Filtrar Pagos
         pagos_alu = df_pagos[df_pagos['AlumnoID'] == id_alu].copy()
         pagos_alu['MontoNum'] = pagos_alu['Monto'].apply(clean_monto)
-        
         total_alu = pagos_alu['MontoNum'].sum()
         
         st.markdown(f"""
@@ -220,7 +245,6 @@ elif st.session_state['current_screen'] == 'detalle_alumno':
             <br>
         """, unsafe_allow_html=True)
         
-        # Mostrar tabla de pagos realizados
         if not pagos_alu.empty:
             st.dataframe(pagos_alu[['Mes', 'Concepto', 'Monto']], use_container_width=True, hide_index=True)
         else:
