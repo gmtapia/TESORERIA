@@ -150,13 +150,22 @@ elif st.session_state['current_screen'] == 'resumen_anual':
         df_plot = df_gastos.groupby('Mes')['MontoNum'].sum().reindex(meses_orden).fillna(0).reset_index()
         titulo_g = "Evolución de Gastos"
 
+    # Generar el gráfico
     fig = px.bar(df_plot, x='Mes', y='MontoNum', text_auto='.2s', title=titulo_g)
     fig.update_traces(marker_color='#7B9D4A', textposition='outside')
+    
+    # Configuración de diseño corregida
     fig.update_layout(
-        yaxis=dict(tickformat=',.0f', separators=',.', title="Monto ($)"),
         xaxis_title=None,
-        plot_bgcolor='rgba(0,0,0,0)'
+        yaxis_title="Monto ($)",
+        plot_bgcolor='rgba(0,0,0,0)',
+        # Configuramos los separadores a nivel global del diseño
+        separators=',.' 
     )
+    
+    # Aplicamos el formato de miles al eje Y por separado
+    fig.update_yaxes(tickformat=',.0f')
+    
     st.plotly_chart(fig, use_container_width=True)
 
 # --- PANTALLA: DETALLE ALUMNO ---
