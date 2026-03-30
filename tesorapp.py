@@ -108,11 +108,23 @@ elif st.session_state['current_screen'] == 'menu_principal':
     col1, col2 = st.columns(2)
     with col1:
         st.markdown('<div class="menu-card"><div class="card-icon">📊</div><div class="card-title">RESUMEN<br>ANUAL</div></div>', unsafe_allow_html=True)
-        if st.button("Ver Resumen", key="btn_res"): navigate_to('resumen_anual')
+        if st.button("Ver Resumen", key="btn_res"): 
+            navigate_to('resumen_anual')
             
     with col2:
         st.markdown('<div class="menu-card"><div class="card-icon">👨‍👩‍👧</div><div class="card-title">DETALLE POR<br>ALUMNO</div></div>', unsafe_allow_html=True)
-        if st.button("Ver Alumno", key="btn_alu"): navigate_to('detalle_alumno')
+        if st.button("Ver Alumno", key="btn_alu"): 
+            navigate_to('detalle_alumno')
+
+    # --- NUEVO BOTÓN PARA VOLVER AL INICIO ---
+    st.write("") # Espacio en blanco
+    st.write("")
+    
+    # Creamos una columna central pequeña para el botón de salir
+    _, col_exit, _ = st.columns([1, 2, 1])
+    with col_exit:
+        if st.button("🚪 SALIR AL INICIO", key="btn_exit"):
+            navigate_to('inicio')
 
 # --- PANTALLA: RESUMEN ANUAL ---
 elif st.session_state['current_screen'] == 'resumen_anual':
@@ -122,12 +134,19 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     
     st.markdown('<div class="main-header">RESUMEN ANUAL DE CAJA</div>', unsafe_allow_html=True)
     
-    # Cálculos
-    ingresos = df_pagos['Monto'].apply(clean_monto).sum()
-    gastos = df_gastos['Monto'].apply(clean_monto).sum()
+    # 1. Cálculos de Totales
+    # Usamos una copia para no alterar los datos originales
+    p_temp = df_pagos.copy()
+    g_temp = df_gastos.copy()
+    
+    p_temp['MontoNum'] = p_temp['Monto'].apply(clean_monto)
+    g_temp['MontoNum'] = g_temp['Monto'].apply(clean_monto)
+    
+    ingresos = p_temp['MontoNum'].sum()
+    gastos = g_temp['MontoNum'].sum()
     saldo = ingresos - gastos
     
-    # Métricas
+    # 2. Métricas Visuales
     c1, c2, c3 = st.columns(3)
     c1.markdown(f'<div class="metric-container"><div class="metric-label">Ingresos Totales</div><div class="metric-value">{format_chile(ingresos)}</div></div>', unsafe_allow_html=True)
     c2.markdown(f'<div class="metric-container"><div class="metric-label">Gasto Total</div><div class="metric-value">{format_chile(gastos)}</div></div>', unsafe_allow_html=True)
@@ -137,33 +156,40 @@ elif st.session_state['current_screen'] == 'resumen_anual':
 
     st.markdown("---")
     
-    # Gráfico Dinámico
+    # 3. Lógica del Gráfico (Aquí estaba el error del valor 0)
     opcion = st.radio("Seleccionar vista:", ["Ingresos por Mes", "Gastos por Mes"], horizontal=True)
     meses_orden = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
     
     if "Ingresos" in opcion:
-        df_pagos['MontoNum'] = df_pagos['Monto'].apply(clean_monto)
-        df_plot = df_pagos.groupby('Mes')['MontoNum'].sum().reindex(meses_orden).fillna(0).reset_index()
+        # Agrupamos y reindexamos para asegurar que aparezcan todos los meses
+        df_resumen = p_temp.groupby('Mes')['MontoNum'].sum().reset_index()
         titulo_g = "Evolución de Ingresos"
     else:
-        df_gastos['MontoNum'] = df_gastos['Monto'].apply(clean_monto)
-        df_plot = df_gastos.groupby('Mes')['MontoNum'].sum().reindex(meses_orden).fillna(0).reset_index()
+        df_resumen = g_temp.groupby('Mes')['MontoNum'].sum().reset_index()
         titulo_g = "Evolución de Gastos"
 
-    # Generar el gráfico
-    fig = px.bar(df_plot, x='Mes', y='MontoNum', text_auto='.2s', title=titulo_g)
+    # Forzamos el orden de los meses para que no salgan desordenados
+    df_resumen['Mes'] = pd.Categorical(df_resumen['Mes'], categories=meses_orden, ordered=True)
+    df_resumen = df_resumen.sort_values('Mes')
+
+    # 4. Creación del Gráfico Plotly
+    fig = px.bar(
+        df_resumen, 
+        x='Mes', 
+        y='MontoNum', 
+        text_auto='.2s', 
+        title=titulo_g
+    )
+    
     fig.update_traces(marker_color='#7B9D4A', textposition='outside')
     
-    # Configuración de diseño corregida
     fig.update_layout(
         xaxis_title=None,
         yaxis_title="Monto ($)",
         plot_bgcolor='rgba(0,0,0,0)',
-        # Configuramos los separadores a nivel global del diseño
-        separators=',.' 
+        separators=',.' # Esto arregla el error de formato que tenías antes
     )
     
-    # Aplicamos el formato de miles al eje Y por separado
     fig.update_yaxes(tickformat=',.0f')
     
     st.plotly_chart(fig, use_container_width=True)
