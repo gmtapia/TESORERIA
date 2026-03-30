@@ -357,10 +357,45 @@ elif st.session_state['current_screen'] == 'detalle_alumno':
             # 4. Validación y Visualización (Sigue igual que antes)
             if user_input:
                 if user_input.strip().lower() == user_real.lower():
-                    st.success(f"Acceso concedido para el Alumno Nº{id_alu}")
-                    
-                    # Lógica de filtrado de pagos...
+                    # 1. Filtrar los pagos del alumno específico
+                    # Filtramos por AlumnoID y nos aseguramos de traer todas las columnas necesarias
                     pagos_alu = df_pagos[df_pagos['AlumnoID'] == id_alu].copy()
-                    # ... (restante del código de visualización de tablas)
+                    
+                    # 2. Limpieza de montos y cálculo del total
+                    pagos_alu['MontoNum'] = pagos_alu['Monto'].apply(clean_monto)
+                    total_acumulado = pagos_alu['MontoNum'].sum()
+                    
+                    # 3. Visualización de Métrica Principal
+                    st.markdown(f"""
+                        <div class="metric-container" style="background-color: #F1F8E9; border-left: 5px solid #7B9D4A;">
+                            <div class="metric-label">TOTAL APORTADO POR EL ALUMNO</div>
+                            <div class="metric-value" style="color: #33691E; font-size: 24px;">
+                                {format_chile(total_acumulado)}
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    st.write("### 📋 Historial Detallado de Pagos")
+
+                    if not pagos_alu.empty:
+                        # 4. Preparar tabla individual (Sin Agrupar)
+                        # Seleccionamos las columnas tal cual vienen del Excel
+                        # Si tu Excel tiene columna 'Fecha', puedes agregarla aquí: ['Fecha', 'Mes', 'Concepto', 'Monto']
+                        df_individual = pagos_alu[['Mes', 'Concepto', 'Monto']].copy()
+                        
+                        # Opcional: Si quieres que los últimos pagos aparezcan arriba, 
+                        # puedes usar: df_individual = df_individual.iloc[::-1]
+                        
+                        # 5. Mostrar Tabla
+                        st.dataframe(
+                            df_individual, 
+                            use_container_width=True, 
+                            hide_index=True
+                        )
+                        
+                        st.caption("Se muestran todos los registros individuales encontrados en la base de datos.")
+                    else:
+                        st.info("Aún no se registran pagos para este alumno en el sistema.")
+                
                 else:
-                    st.error("Nombre de usuario incorrecto. No tiene permisos para ver estos datos.")
+                    st.error("❌ El identificador ingresado no coincide con el alumno seleccionado.")
