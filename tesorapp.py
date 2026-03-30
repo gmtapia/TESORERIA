@@ -165,16 +165,21 @@ elif st.session_state['current_screen'] == 'menu_principal':
         if st.button("🚪 VOLVER A BIENVENIDA", key="btn_exit"):
             navigate_to('inicio')
 
-# --- PANTALLA: RESUMEN ANUAL (CON GRÁFICOS CORREGIDOS) ---
+# --- PANTALLA: RESUMEN ANUAL (CON GRÁFICOS Y TABLA) ---
 elif st.session_state['current_screen'] == 'resumen_anual':
     if st.button("⬅️ Volver", key="btn_back_res"): 
         navigate_to('menu_principal')
     
     st.markdown('<div class="main-header">RESUMEN ANUAL DE CAJA</div>', unsafe_allow_html=True)
     
-    # Cálculos y Limpieza
+    # 1. Preparación de Datos (Limpieza Profunda)
     p_temp = df_pagos.copy()
     g_temp = df_gastos.copy()
+    
+    # Limpiamos espacios y estandarizamos nombres de meses del Excel
+    p_temp['Mes'] = p_temp['Mes'].astype(str).str.strip().str.capitalize()
+    g_temp['Mes'] = g_temp['Mes'].astype(str).str.strip().str.capitalize()
+    
     p_temp['MontoNum'] = p_temp['Monto'].apply(clean_monto)
     g_temp['MontoNum'] = g_temp['Monto'].apply(clean_monto)
     
@@ -182,50 +187,53 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     gastos = g_temp['MontoNum'].sum()
     saldo = ingresos - gastos
     
-    # Métricas
+    # 2. Métricas
     c1, c2, c3 = st.columns(3)
-    c1.markdown(f'<div class="metric-container"><div class="metric-label">Ingresos Totales</div><div class="metric-value">{format_chile(ingresos)}</div></div>', unsafe_allow_html=True)
-    c2.markdown(f'<div class="metric-container"><div class="metric-label">Gasto Total</div><div class="metric-value">{format_chile(gastos)}</div></div>', unsafe_allow_html=True)
-    
-    color_saldo = "#7B9D4A" if saldo >= 0 else "#D32F2F"
-    c3.markdown(f'<div class="metric-container"><div class="metric-label">Saldo Neto</div><div class="metric-value" style="color:{color_saldo}">{format_chile(saldo)}</div></div>', unsafe_allow_html=True)
+    c1.markdown(f'<div class="metric-container"><div class="metric-label">Ingresos</div><div class="metric-value">{format_chile(ingresos)}</div></div>', unsafe_allow_html=True)
+    c2.markdown(f'<div class="metric-container"><div class="metric-label">Gastos</div><div class="metric-value">{format_chile(gastos)}</div></div>', unsafe_allow_html=True)
+    c3.markdown(f'<div class="metric-container"><div class="metric-label">Saldo</div><div class="metric-value" style="color:{"green" if saldo>=0 else "red"}">{format_chile(saldo)}</div></div>', unsafe_allow_html=True)
 
     st.markdown("---")
     
-    # Gráfico Dinámico - CORREGIDO
+    # 3. Configuración de Gráfico
     opcion = st.radio("Seleccionar vista:", ["Ingresos por Mes", "Gastos por Mes"], horizontal=True)
     
-    # Lista extendida para reconocer meses cortos y largos del Excel
+    # Lista maestra de meses (Capitalizados)
     meses_orden = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
                    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
     
     if "Ingresos" in opcion:
         df_resumen = p_temp.groupby('Mes')['MontoNum'].sum().reset_index()
-        titulo_g = "Evolución de Ingresos"
-        color_barras = '#6B8E23'  # Verde Oliva
+        color_barras = '#6B8E23' # Verde Oliva
+        df_detalle = p_temp[p_temp['MontoNum'] > 0][['Mes', 'Concepto', 'Monto']]
     else:
         df_resumen = g_temp.groupby('Mes')['MontoNum'].sum().reset_index()
-        titulo_g = "Evolución de Gastos"
-        color_barras = '#8B0000'  # Rojo Oscuro
+        color_barras = '#8B0000' # Rojo Oscuro
+        df_detalle = g_temp[g_temp['MontoNum'] > 0][['Mes', 'Concepto', 'Monto']]
 
-    # Forzamos el orden de los meses y eliminamos filas vacías
+    # Forzamos orden y eliminamos meses sin datos
     df_resumen['Mes'] = pd.Categorical(df_resumen['Mes'], categories=meses_orden, ordered=True)
     df_resumen = df_resumen.sort_values('Mes').dropna(subset=['Mes'])
 
-    # Creación del Gráfico si hay datos
+    # 4. Mostrar Gráfico
     if not df_resumen.empty and df_resumen['MontoNum'].sum() > 0:
-        fig = px.bar(df_resumen, x='Mes', y='MontoNum', text_auto='.2s', title=titulo_g)
+        fig = px.bar(df_resumen, x='Mes', y='MontoNum', text_auto='.2s')
         fig.update_traces(marker_color=color_barras, textposition='outside')
-        fig.update_layout(
-            xaxis_title=None,
-            yaxis_title="Monto ($)",
-            plot_bgcolor='rgba(0,0,0,0)',
-            separators=',.' 
-        )
+        fig.update_layout(xaxis_title=None, yaxis_title="Monto ($)", plot_bgcolor='rgba(0,0,0,0)', separators=',.')
         fig.update_yaxes(tickformat=',.0f')
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.warning(f"No hay montos registrados para {opcion}. Verifica que la columna 'Mes' en tu Excel coincida con nombres como 'Mar' o 'Marzo'.")
+        st.warning("⚠️ No se detectan montos para graficar. Revisa que en el Excel los meses coincidan (ej: 'Marzo') y los montos no tengan ceros extra.")
+
+    # 5. TABLA DE DETALLE (NUEVA)
+    st.write("### 📝 Detalle de Movimientos")
+    if not df_detalle.empty:
+        # Formateamos la columna monto solo para la tabla visual
+        df_visual = df_detalle.copy()
+        df_visual['Monto'] = df_visual['Monto'].apply(lambda x: format_chile(clean_monto(x)))
+        st.dataframe(df_visual, use_container_width=True, hide_index=True)
+    else:
+        st.info("No hay movimientos registrados para mostrar en la tabla.")
 
 # --- PANTALLA: DETALLE ALUMNO ---
 elif st.session_state['current_screen'] == 'detalle_alumno':
