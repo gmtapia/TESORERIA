@@ -165,24 +165,24 @@ elif st.session_state['current_screen'] == 'menu_principal':
         if st.button("🚪 VOLVER A BIENVENIDA", key="btn_exit"):
             navigate_to('inicio')
 
-# --- PANTALLA: RESUMEN ANUAL (CON GRÁFICOS Y TABLA) ---
+# --- PANTALLA: RESUMEN ANUAL (AJUSTE FINAL) ---
 elif st.session_state['current_screen'] == 'resumen_anual':
     if st.button("⬅️ Volver", key="btn_back_res"): 
         navigate_to('menu_principal')
     
     st.markdown('<div class="main-header">RESUMEN ANUAL DE CAJA</div>', unsafe_allow_html=True)
     
-    # 1. Preparación de Datos (Limpieza Profunda)
+    # 1. Preparación de Datos
     p_temp = df_pagos.copy()
     g_temp = df_gastos.copy()
-    
-    # Limpiamos espacios y estandarizamos nombres de meses del Excel
-    p_temp['Mes'] = p_temp['Mes'].astype(str).str.strip().str.capitalize()
-    g_temp['Mes'] = g_temp['Mes'].astype(str).str.strip().str.capitalize()
     
     p_temp['MontoNum'] = p_temp['Monto'].apply(clean_monto)
     g_temp['MontoNum'] = g_temp['Monto'].apply(clean_monto)
     
+    # Estandarizamos meses para que coincidan con la lista maestra
+    p_temp['Mes'] = p_temp['Mes'].astype(str).str.strip().str.capitalize()
+    g_temp['Mes'] = g_temp['Mes'].astype(str).str.strip().str.capitalize()
+
     ingresos = p_temp['MontoNum'].sum()
     gastos = g_temp['MontoNum'].sum()
     saldo = ingresos - gastos
@@ -195,45 +195,48 @@ elif st.session_state['current_screen'] == 'resumen_anual':
 
     st.markdown("---")
     
-    # 3. Configuración de Gráfico
+    # 3. Lógica de Gráfico (Mostrar todos los meses)
     opcion = st.radio("Seleccionar vista:", ["Ingresos por Mes", "Gastos por Mes"], horizontal=True)
     
-    # Lista maestra de meses (Capitalizados)
-    meses_orden = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
-                   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+    # Lista de meses oficial para el Kinder C
+    meses_completos = ['Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
     
     if "Ingresos" in opcion:
-        df_resumen = p_temp.groupby('Mes')['MontoNum'].sum().reset_index()
+        # Agrupamos y rellenamos los meses faltantes con 0
+        df_resumen = p_temp.groupby('Mes')['MontoNum'].sum().reindex(meses_completos, fill_value=0).reset_index()
         color_barras = '#6B8E23' # Verde Oliva
-        df_detalle = p_temp[p_temp['MontoNum'] > 0][['Mes', 'Concepto', 'Monto']]
+        # Agrupación para la tabla: Mes + Concepto
+        df_agrupado = p_temp.groupby(['Mes', 'Concepto'])['MontoNum'].sum().reset_index()
     else:
-        df_resumen = g_temp.groupby('Mes')['MontoNum'].sum().reset_index()
+        df_resumen = g_temp.groupby('Mes')['MontoNum'].sum().reindex(meses_completos, fill_value=0).reset_index()
         color_barras = '#8B0000' # Rojo Oscuro
-        df_detalle = g_temp[g_temp['MontoNum'] > 0][['Mes', 'Concepto', 'Monto']]
+        df_agrupado = g_temp.groupby(['Mes', 'Concepto'])['MontoNum'].sum().reset_index()
 
-    # Forzamos orden y eliminamos meses sin datos
-    df_resumen['Mes'] = pd.Categorical(df_resumen['Mes'], categories=meses_orden, ordered=True)
-    df_resumen = df_resumen.sort_values('Mes').dropna(subset=['Mes'])
+    # Aseguramos el orden cronológico en el gráfico
+    df_resumen['Mes'] = pd.Categorical(df_resumen['Mes'], categories=meses_completos, ordered=True)
+    df_resumen = df_resumen.sort_values('Mes')
 
     # 4. Mostrar Gráfico
-    if not df_resumen.empty and df_resumen['MontoNum'].sum() > 0:
-        fig = px.bar(df_resumen, x='Mes', y='MontoNum', text_auto='.2s')
-        fig.update_traces(marker_color=color_barras, textposition='outside')
-        fig.update_layout(xaxis_title=None, yaxis_title="Monto ($)", plot_bgcolor='rgba(0,0,0,0)', separators=',.')
-        fig.update_yaxes(tickformat=',.0f')
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.warning("⚠️ No se detectan montos para graficar. Revisa que en el Excel los meses coincidan (ej: 'Marzo') y los montos no tengan ceros extra.")
+    fig = px.bar(df_resumen, x='Mes', y='MontoNum', text_auto='.2s')
+    fig.update_traces(marker_color=color_barras, textposition='outside')
+    fig.update_layout(xaxis_title=None, yaxis_title="Monto ($)", plot_bgcolor='rgba(0,0,0,0)', separators=',.')
+    fig.update_yaxes(tickformat=',.0f')
+    st.plotly_chart(fig, use_container_width=True)
 
-    # 5. TABLA DE DETALLE (NUEVA)
-    st.write("### 📝 Detalle de Movimientos")
-    if not df_detalle.empty:
-        # Formateamos la columna monto solo para la tabla visual
-        df_visual = df_detalle.copy()
-        df_visual['Monto'] = df_visual['Monto'].apply(lambda x: format_chile(clean_monto(x)))
-        st.dataframe(df_visual, use_container_width=True, hide_index=True)
+    # 5. TABLA AGRUPADA (NUEVA LÓGICA)
+    st.write("### 📝 Resumen de Movimientos por Concepto")
+    
+    # Filtramos solo lo que tiene valor > 0 y ordenamos por mes
+    df_agrupado = df_agrupado[df_agrupado['MontoNum'] > 0].copy()
+    df_agrupado['Mes'] = pd.Categorical(df_agrupado['Mes'], categories=meses_completos, ordered=True)
+    df_agrupado = df_agrupado.sort_values(['Mes', 'Concepto'])
+
+    if not df_agrupado.empty:
+        # Formato moneda para la tabla
+        df_agrupado['Monto'] = df_agrupado['MontoNum'].apply(format_chile)
+        st.dataframe(df_agrupado[['Mes', 'Concepto', 'Monto']], use_container_width=True, hide_index=True)
     else:
-        st.info("No hay movimientos registrados para mostrar en la tabla.")
+        st.info("No hay movimientos registrados para mostrar.")
 
 # --- PANTALLA: DETALLE ALUMNO ---
 elif st.session_state['current_screen'] == 'detalle_alumno':
