@@ -208,11 +208,11 @@ elif st.session_state['current_screen'] == 'resumen_anual':
         titulo_g = "Evolución de Gastos"
         color_barras = '#8B0000'  # Rojo Oscuro
 
-    # 1. Forzamos el orden de los meses (esto arregla el eje X vacío)
+    # Forzamos el orden de los meses y eliminamos filas vacías
     df_resumen['Mes'] = pd.Categorical(df_resumen['Mes'], categories=meses_orden, ordered=True)
     df_resumen = df_resumen.sort_values('Mes').dropna(subset=['Mes'])
 
-    # 2. Creación del Gráfico
+    # Creación del Gráfico si hay datos
     if not df_resumen.empty and df_resumen['MontoNum'].sum() > 0:
         fig = px.bar(df_resumen, x='Mes', y='MontoNum', text_auto='.2s', title=titulo_g)
         fig.update_traces(marker_color=color_barras, textposition='outside')
@@ -225,7 +225,7 @@ elif st.session_state['current_screen'] == 'resumen_anual':
         fig.update_yaxes(tickformat=',.0f')
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.warning(f"No hay datos registrados en la columna 'Monto' para {opcion}. Revisa tu Excel.")
+        st.warning(f"No hay montos registrados para {opcion}. Verifica que la columna 'Mes' en tu Excel coincida con nombres como 'Mar' o 'Marzo'.")
 
 # --- PANTALLA: DETALLE ALUMNO ---
 elif st.session_state['current_screen'] == 'detalle_alumno':
