@@ -130,7 +130,7 @@ if st.session_state['current_screen'] == 'inicio':
     
     # Texto de bienvenida centrado
     st.markdown('<div class="big-title">CONTROL TESORERÍA</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">Kinder C - SSCC Manquehue<br>Año Escolar 2026</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">Kinder C - SSCC Alameda<br>Año Escolar 2026</div>', unsafe_allow_html=True)
     
     st.write("") # Espacio
     
@@ -192,32 +192,40 @@ elif st.session_state['current_screen'] == 'resumen_anual':
 
     st.markdown("---")
     
-    # Gráfico Dinámico
+    # Gráfico Dinámico - CORREGIDO
     opcion = st.radio("Seleccionar vista:", ["Ingresos por Mes", "Gastos por Mes"], horizontal=True)
-    meses_orden = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+    
+    # Lista extendida para reconocer meses cortos y largos del Excel
+    meses_orden = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+                   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
     
     if "Ingresos" in opcion:
         df_resumen = p_temp.groupby('Mes')['MontoNum'].sum().reset_index()
         titulo_g = "Evolución de Ingresos"
+        color_barras = '#6B8E23'  # Verde Oliva
     else:
         df_resumen = g_temp.groupby('Mes')['MontoNum'].sum().reset_index()
         titulo_g = "Evolución de Gastos"
+        color_barras = '#8B0000'  # Rojo Oscuro
 
-    # Forzamos el orden de los meses
+    # 1. Forzamos el orden de los meses (esto arregla el eje X vacío)
     df_resumen['Mes'] = pd.Categorical(df_resumen['Mes'], categories=meses_orden, ordered=True)
-    df_resumen = df_resumen.sort_values('Mes')
+    df_resumen = df_resumen.sort_values('Mes').dropna(subset=['Mes'])
 
-    # Creación del Gráfico Plotly
-    fig = px.bar(df_resumen, x='Mes', y='MontoNum', text_auto='.2s', title=titulo_g)
-    fig.update_traces(marker_color='#7B9D4A', textposition='outside')
-    fig.update_layout(
-        xaxis_title=None,
-        yaxis_title="Monto ($)",
-        plot_bgcolor='rgba(0,0,0,0)',
-        separators=',.' 
-    )
-    fig.update_yaxes(tickformat=',.0f')
-    st.plotly_chart(fig, use_container_width=True)
+    # 2. Creación del Gráfico
+    if not df_resumen.empty and df_resumen['MontoNum'].sum() > 0:
+        fig = px.bar(df_resumen, x='Mes', y='MontoNum', text_auto='.2s', title=titulo_g)
+        fig.update_traces(marker_color=color_barras, textposition='outside')
+        fig.update_layout(
+            xaxis_title=None,
+            yaxis_title="Monto ($)",
+            plot_bgcolor='rgba(0,0,0,0)',
+            separators=',.' 
+        )
+        fig.update_yaxes(tickformat=',.0f')
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning(f"No hay datos registrados en la columna 'Monto' para {opcion}. Revisa tu Excel.")
 
 # --- PANTALLA: DETALLE ALUMNO ---
 elif st.session_state['current_screen'] == 'detalle_alumno':
