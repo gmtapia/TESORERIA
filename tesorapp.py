@@ -264,13 +264,37 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     # 5. Tabla Resumen Agrupada
     st.write("### 📝 Resumen de Movimientos por Concepto")
     df_agrupado = df_agrupado[df_agrupado['MontoNum'] > 0].copy()
+    
     if not df_agrupado.empty:
         df_agrupado['MesFull'] = pd.Categorical(df_agrupado['MesFull'], categories=meses_cl, ordered=True)
         df_agrupado = df_agrupado.sort_values(['MesFull', 'Concepto'])
         df_agrupado['Monto'] = df_agrupado['MontoNum'].apply(format_chile)
-        # Renombramos MesFull a Mes para la vista final
-        st.dataframe(df_agrupado.rename(columns={'MesFull': 'Mes'})[['Mes', 'Concepto', 'Monto']], 
-                     use_container_width=True, hide_index=True)
+        
+        # Definimos columnas base y configuración de visualización
+        cols_mostrar = ['Mes', 'Concepto', 'Monto']
+        config_tabla = {}
+
+        # Lógica específica para GASTOS: Incluir columna "Comprobante"
+        if "Gastos" in opcion:
+            # Buscamos si existe la columna en el DataFrame original de gastos
+            if 'Comprobante' in g_temp.columns:
+                # Agregamos la columna a la lista de visualización
+                cols_mostrar.append('Comprobante')
+                # La configuramos como LinkColumn para que el enlace de Drive funcione al clic
+                config_tabla["Comprobante"] = st.column_config.LinkColumn(
+                    "Comprobante", 
+                    display_text="📄 Ver Boleta"
+                )
+        
+        # Renombramos MesFull a Mes para la visualización final
+        df_final = df_agrupado.rename(columns={'MesFull': 'Mes'})
+
+        st.dataframe(
+            df_final[cols_mostrar], 
+            use_container_width=True, 
+            hide_index=True,
+            column_config=config_tabla
+        )
     else:
         st.info("No hay movimientos registrados.")
 
