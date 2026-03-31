@@ -240,7 +240,12 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     else:
         resumen_grafico = g_temp.groupby('MesFull')['MontoNum'].sum().reindex(meses_cl, fill_value=0).reset_index()
         color_barras = '#8B0000'
-        df_agrupado = g_temp.groupby(['MesFull', 'Concepto'])['MontoNum'].sum().reset_index()
+        # --- CORRECCIÓN AQUÍ: Incluimos 'Comprobante' en la agrupación si existe ---
+        columnas_agrupar = ['MesFull', 'Concepto']
+        if 'Comprobante' in g_temp.columns:
+            columnas_agrupar.append('Comprobante')
+        
+        df_agrupado = g_temp.groupby(columnas_agrupar)['MontoNum'].sum().reset_index()
 
     # 4. Mostrar Gráfico (ESTÁTICO Y SIN ZOOM)
     resumen_grafico['MesFull'] = pd.Categorical(resumen_grafico['MesFull'], categories=meses_cl, ordered=True)
