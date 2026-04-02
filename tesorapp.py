@@ -295,11 +295,14 @@ elif st.session_state['current_screen'] == 'resumen_anual':
         df_final = df_agrupado.rename(columns={'MesFull': 'Mes'})
 
         st.dataframe(
-            df_final[cols_mostrar], 
-            use_container_width=True, 
-            hide_index=True,
-            column_config=config_tabla
+        df_final[cols_mostrar], 
+        use_container_width=True, 
+        hide_index=True,
+        column_config=config_tabla,
+        # Desactiva la búsqueda, el filtrado y la reordenación de columnas
+        on_select="ignore", 
         )
+    
     else:
         st.info("No hay movimientos registrados.")
 
