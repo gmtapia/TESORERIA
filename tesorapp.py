@@ -266,37 +266,16 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     # Renderizar el gráfico ocultando la barra de herramientas superior
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    
     # 5. Tabla Resumen Agrupada
     st.write("### 📝 Resumen de Movimientos por Concepto")
     
-    # --- HACK CSS DEFINITIVO ---
+    # Mantenemos el hack de CSS para ocultar la barra de herramientas (Lupa, Pantalla completa)
     st.markdown("""
         <style>
-        /* 1. Oculta la barra de herramientas (lupa, zoom, etc.) */
         [data-testid="stElementToolbar"], 
         [data-testid="stDataFrameToolbar"],
         button[title="View fullscreen"] {
             display: none !important;
-        }
-    
-        /* 2. Bloqueo total de interacción con la cabecera */
-        /* Este selector apunta a la zona superior de la cuadrícula */
-        .stDataFrame canvas {
-            pointer-events: auto !important;
-        }
-    
-        /* Intentamos bloquear el reordenamiento forzando el cursor por defecto */
-        .stDataFrame div[role="grid"] div {
-            cursor: default !important;
-        }
-    
-        /* 3. Si Streamlit permite moverlas es por el componente canvas de Glide Data Grid.
-           Como no podemos bloquear el canvas sin romper los links, 
-           usamos este truco para ocultar los indicadores visuales de movimiento */
-        [class^="glideDataGrid"] {
-            user-select: none !important;
-            -webkit-user-drag: none !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -304,35 +283,43 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     df_agrupado = df_agrupado[df_agrupado['MontoNum'] > 0].copy()
     
     if not df_agrupado.empty:
-        # (Tu lógica de procesamiento de datos se mantiene igual)
         df_agrupado['MesFull'] = pd.Categorical(df_agrupado['MesFull'], categories=meses_cl, ordered=True)
         df_agrupado = df_agrupado.sort_values(['MesFull', 'Concepto'])
         df_agrupado['Monto'] = df_agrupado['MontoNum'].apply(format_chile)
         
         df_final = df_agrupado.rename(columns={'MesFull': 'Mes'})
         
+        # 1. Definimos las columnas base
         cols_mostrar = ['Mes', 'Concepto', 'Monto']
         config_tabla = {}
     
+        # 2. Aplicamos la sugerencia técnica: 
+        # Configuramos las columnas estándar como 'disabled' para restringir interacción
+        for col in cols_mostrar:
+            config_tabla[col] = st.column_config.Column(
+                label=col,
+                disabled=True  # Indica que la columna es solo lectura
+            )
+    
+        # 3. Lógica para la columna de Comprobante
         if "Gastos" in opcion and 'Comprobante' in df_final.columns:
             cols_mostrar.append('Comprobante')
             config_tabla["Comprobante"] = st.column_config.LinkColumn(
                 "Comprobante", 
-                display_text="📄 Ver Boleta"
+                display_text="📄 Ver Boleta",
+                disabled=True # También deshabilitamos edición aquí, pero el link sigue funcionando
             )
         
-        # IMPORTANTE: Usamos st.column_config.Column para las demás 
-        # para asegurar que no tengan funciones de filtrado activas.
-        for col in ['Mes', 'Concepto', 'Monto']:
-            config_tabla[col] = st.column_config.Column(disabled=True)
-    
+        # 4. Renderizado final
         st.dataframe(
             df_final[cols_mostrar], 
             use_container_width=True, 
             hide_index=True,
             column_config=config_tabla,
-            on_select="ignore"
+            column_order=cols_mostrar, # Fija el orden inicial
+            on_select="ignore"         # Desactiva selección de filas
         )
+    
     else:
         st.info("No hay movimientos registrados.")
 
