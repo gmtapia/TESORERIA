@@ -270,12 +270,25 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     # 5. Tabla Resumen Agrupada
     st.write("### 📝 Resumen de Movimientos por Concepto")
     
-    # Mantenemos el hack CSS para ocultar la barra de herramientas
+    # --- HACK CSS AVANZADO ---
     st.markdown("""
         <style>
+        /* 1. Oculta la barra de herramientas (lupa, zoom) */
         button[title="View fullscreen"], 
         .stDataFrame [data-testid="stElementToolbar"] {
             display: none !important;
+        }
+        
+        /* 2. Bloquea el movimiento de columnas desactivando eventos en la cabecera */
+        /* Nota: Esto evita que se puedan arrastrar o reordenar */
+        .stDataFrame [data-testid="stTableFixedHeader"] {
+            pointer-events: none !important;
+        }
+    
+        /* 3. Volvemos a activar los eventos en el cuerpo de la tabla */
+        /* para que los enlaces sigan siendo clickeables */
+        .stDataFrame [data-testid="stTable"] {
+            pointer-events: auto !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -289,7 +302,6 @@ elif st.session_state['current_screen'] == 'resumen_anual':
         
         df_final = df_agrupado.rename(columns={'MesFull': 'Mes'})
         
-        # 1. Definimos las columnas a mostrar
         cols_mostrar = ['Mes', 'Concepto', 'Monto']
         config_tabla = {}
     
@@ -300,17 +312,14 @@ elif st.session_state['current_screen'] == 'resumen_anual':
                 display_text="📄 Ver Boleta"
             )
         
-        # 2. Renderizado con bloqueo de movimiento
         st.dataframe(
             df_final[cols_mostrar], 
             use_container_width=True, 
             hide_index=True,
             column_config=config_tabla,
-            # 'column_order' fija el orden y evita que el usuario las desplace
             column_order=cols_mostrar,
             on_select="ignore"
         )
-    
     else:
         st.info("No hay movimientos registrados.")
 
