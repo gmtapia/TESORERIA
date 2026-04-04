@@ -270,10 +270,9 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     # 5. Tabla Resumen Agrupada
     st.write("### 📝 Resumen de Movimientos por Concepto")
     
-    # --- HACK CSS PARA OCULTAR BOTONES DE LA TABLA ---
+    # Mantenemos el hack CSS para ocultar la barra de herramientas
     st.markdown("""
         <style>
-        /* Oculta la barra de herramientas (lupa, flechas de expansión, etc.) */
         button[title="View fullscreen"], 
         .stDataFrame [data-testid="stElementToolbar"] {
             display: none !important;
@@ -288,31 +287,30 @@ elif st.session_state['current_screen'] == 'resumen_anual':
         df_agrupado = df_agrupado.sort_values(['MesFull', 'Concepto'])
         df_agrupado['Monto'] = df_agrupado['MontoNum'].apply(format_chile)
         
-        # 1. Preparamos las columnas
         df_final = df_agrupado.rename(columns={'MesFull': 'Mes'})
+        
+        # 1. Definimos las columnas a mostrar
         cols_mostrar = ['Mes', 'Concepto', 'Monto']
         config_tabla = {}
     
-        # 2. Verificación forzada de la columna Comprobante
-        # Revisamos en df_agrupado o g_temp según tu flujo
         if "Gastos" in opcion and 'Comprobante' in df_final.columns:
             cols_mostrar.append('Comprobante')
             config_tabla["Comprobante"] = st.column_config.LinkColumn(
                 "Comprobante", 
-                display_text="📄 Ver Boleta",
-                help="Haga clic para abrir el archivo en Drive"
+                display_text="📄 Ver Boleta"
             )
-    
-        # 3. Renderizado
+        
+        # 2. Renderizado con bloqueo de movimiento
         st.dataframe(
             df_final[cols_mostrar], 
             use_container_width=True, 
             hide_index=True,
             column_config=config_tabla,
-            # Desactiva la selección de filas para evitar el resaltado azul
+            # 'column_order' fija el orden y evita que el usuario las desplace
+            column_order=cols_mostrar,
             on_select="ignore"
         )
-
+    
     else:
         st.info("No hay movimientos registrados.")
 
