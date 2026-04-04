@@ -270,25 +270,33 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     # 5. Tabla Resumen Agrupada
     st.write("### 📝 Resumen de Movimientos por Concepto")
     
-    # --- HACK CSS AVANZADO ---
+    # --- HACK CSS DEFINITIVO ---
     st.markdown("""
         <style>
-        /* 1. Oculta la barra de herramientas (lupa, zoom) */
-        button[title="View fullscreen"], 
-        .stDataFrame [data-testid="stElementToolbar"] {
+        /* 1. Oculta la barra de herramientas (lupa, zoom, etc.) */
+        [data-testid="stElementToolbar"], 
+        [data-testid="stDataFrameToolbar"],
+        button[title="View fullscreen"] {
             display: none !important;
         }
-        
-        /* 2. Bloquea el movimiento de columnas desactivando eventos en la cabecera */
-        /* Nota: Esto evita que se puedan arrastrar o reordenar */
-        .stDataFrame [data-testid="stTableFixedHeader"] {
-            pointer-events: none !important;
+    
+        /* 2. Bloqueo total de interacción con la cabecera */
+        /* Este selector apunta a la zona superior de la cuadrícula */
+        .stDataFrame canvas {
+            pointer-events: auto !important;
         }
     
-        /* 3. Volvemos a activar los eventos en el cuerpo de la tabla */
-        /* para que los enlaces sigan siendo clickeables */
-        .stDataFrame [data-testid="stTable"] {
-            pointer-events: auto !important;
+        /* Intentamos bloquear el reordenamiento forzando el cursor por defecto */
+        .stDataFrame div[role="grid"] div {
+            cursor: default !important;
+        }
+    
+        /* 3. Si Streamlit permite moverlas es por el componente canvas de Glide Data Grid.
+           Como no podemos bloquear el canvas sin romper los links, 
+           usamos este truco para ocultar los indicadores visuales de movimiento */
+        [class^="glideDataGrid"] {
+            user-select: none !important;
+            -webkit-user-drag: none !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -296,6 +304,7 @@ elif st.session_state['current_screen'] == 'resumen_anual':
     df_agrupado = df_agrupado[df_agrupado['MontoNum'] > 0].copy()
     
     if not df_agrupado.empty:
+        # (Tu lógica de procesamiento de datos se mantiene igual)
         df_agrupado['MesFull'] = pd.Categorical(df_agrupado['MesFull'], categories=meses_cl, ordered=True)
         df_agrupado = df_agrupado.sort_values(['MesFull', 'Concepto'])
         df_agrupado['Monto'] = df_agrupado['MontoNum'].apply(format_chile)
@@ -312,12 +321,16 @@ elif st.session_state['current_screen'] == 'resumen_anual':
                 display_text="📄 Ver Boleta"
             )
         
+        # IMPORTANTE: Usamos st.column_config.Column para las demás 
+        # para asegurar que no tengan funciones de filtrado activas.
+        for col in ['Mes', 'Concepto', 'Monto']:
+            config_tabla[col] = st.column_config.Column(disabled=True)
+    
         st.dataframe(
             df_final[cols_mostrar], 
             use_container_width=True, 
             hide_index=True,
             column_config=config_tabla,
-            column_order=cols_mostrar,
             on_select="ignore"
         )
     else:
